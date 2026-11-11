@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JOBBY UZ - Ish Topish va Berish Platformasi</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #1e293b; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body class="bg-slate-50 min-h-screen pb-24">
+
+    <!-- SOZLAMALAR: Tokeningiz o'rnatildi -->
+    <script>
+        const BOT_TOKEN = "9181525736:AAFFJ2lYO63eng5XPStP0Fdq8Zg7LfV16GA";
+        const CHANNEL_USERNAME = "@jobbyuz";
+        const ADMIN_ID = 6177821743; // Sizning Admin ID raqamingiz
+    </script>
+
+    <!-- Header -->
+    <header class="bg-indigo-600 text-white p-4 sticky top-0 z-50 shadow-md flex justify-between items-center">
+        <div>
+            <h1 class="text-xl font-bold tracking-wider">JOBBY UZ</h1>
+            <p class="text-xs text-indigo-200">Ish topish va berishning eng qulay yo'li</p>
+        </div>
+        <div id="user-badge" class="text-xs bg-indigo-700 px-2.5 py-1 rounded-full font-medium hidden">
+            Admin 👑
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-md mx-auto p-4">
+
+        <!-- 1. VAKANSIYALAR BO'LIMI -->
+        <section id="jobs-tab" class="tab-content active">
+            <div class="mb-4">
+                <input type="text" id="search-input" placeholder="Lavozim yoki ko'nikma bo'yicha qidirish..." 
+                    class="w-full p-3 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+                    oninput="filterJobs()">
+            </div>
+
+            <div id="jobs-list" class="space-y-3">
+                <!-- Vakansiyalar shu yerga dinamik yuklanadi -->
+            </div>
+        </section>
+
+        <!-- 2. E'LON BERISH BO'LIMI -->
+        <section id="post-tab" class="tab-content">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                <h2 class="text-lg font-bold mb-4 text-slate-800">Yangi Vakansiya Joylash</h2>
+                <form id="job-form" onsubmit="submitJob(event)" class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Lavozim (Masalan: Python Dasturchi)</label>
+                        <input type="text" id="job-title" required class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Kompaniya nomi</label>
+                        <input type="text" id="job-company" required class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Oylik maosh</label>
+                            <input type="text" id="job-salary" placeholder="Masalan: $500 - $800" required class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Ish turi</label>
+                            <select id="job-type" class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none bg-white">
+                                <option value="To'liq stavka">To'liq stavka</option>
+                                <option value="Masofaviy (Remote)">Masofaviy (Remote)</option>
+                                <option value="Yarim stavka">Yarim stavka</option>
+                                <option value="Stajirovka">Stajirovka</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Bog'lanish uchun (Telegram username / Tel)</label>
+                        <input type="text" id="job-contact" placeholder="@username yoki +998901234567" required class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Batafsil talablar va vazifalar</label>
+                        <textarea id="job-desc" rows="3" required class="w-full p-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-indigo-500 outline-none"></textarea>
+                    </div>
+                    <button type="submit" class="w-full bg-indigo-600 text-white font-semibold py-3 rounded-xl hover:bg-indigo-700 transition shadow-md shadow-indigo-200">
+                        E'lonni Yuborish (Moderatsiyaga)
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- 3. BIZ HAQIMIZDA BO'LIMI -->
+        <section id="about-tab" class="tab-content">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 space-y-4">
+                <h2 class="text-lg font-bold text-slate-800">Biz haqimizda</h2>
+                <div class="text-sm text-slate-600 space-y-3 leading-relaxed">
+                    <p><strong>JOBBYUZ</strong> — bu intellektual rivojlanish va texnologik yechimlarni birlashtirgan innovatsion loyihadir.</p>
+                    <p>Biz ancha vaqtdan buyon dasturlash va IT-texnologiyalar sohasida o'z bilimlarimizni chuqurlashtirib, zamonaviy muammolarga yechim izlab kelmoqdamiz. Bugungi kunda ushbu Mini App bizning eng yirik va strategik muhim startup loyihamiz bo'lib, u orqali foydalanuvchilarga sifatli va qulaylik yaratuvchi mahsulotlarni taqdim etishni maqsad qilganmiz.</p>
+                    <p class="font-medium text-indigo-600">Biz bilan birga kelajakni qurishga chorlaymiz!</p>
+                </div>
+
+                <div class="pt-4 border-t border-slate-100">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Rasmiy sahifalarimiz</h3>
+                    <div class="flex gap-3">
+                        <a href="https://t.me/jobbyuz" target="_blank" class="flex-1 bg-sky-50 text-sky-600 p-3 rounded-xl font-medium text-center hover:bg-sky-100 transition flex items-center justify-center gap-2">
+                            Telegram
+                        </a>
+                        <a href="https://instagram.com/jobbyuz" target="_blank" class="flex-1 bg-pink-50 text-pink-600 p-3 rounded-xl font-medium text-center hover:bg-pink-100 transition flex items-center justify-center gap-2">
+                            Instagram
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. ADMIN PANEL BO'LIMI (Faqat Adminga ko'rinadi) -->
+        <section id="admin-tab" class="tab-content">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                <h2 class="text-lg font-bold mb-4 text-slate-800 flex items-center justify-between">
+                    <span>👑 Admin Panel</span>
+                    <span id="pending-count" class="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">0 ta kutilmoqda</span>
+                </h2>
+                <div id="admin-pending-list" class="space-y-3">
+                    <!-- Kutilayotgan e'lonlar -->
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Bottom Navigation Bar -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 py-2 px-4 shadow-lg max-w-md mx-auto z-50">
+        <div id="nav-container" class="flex justify-around items-center">
+            <button onclick="switchTab('jobs')" class="nav-btn flex flex-col items-center text-indigo-600" data-target="jobs-tab">
+                <span class="text-xl">💼</span>
+                <span class="text-[10px] font-medium mt-1">Ishlar</span>
+            </button>
+            <button onclick="switchTab('post')" class="nav-btn flex flex-col items-center text-slate-400" data-target="post-tab">
+                <span class="text-xl">➕</span>
+                <span class="text-[10px] font-medium mt-1">E'lon berish</span>
+            </button>
+            <button onclick="switchTab('about')" class="nav-btn flex flex-col items-center text-slate-400" data-target="about-tab">
+                <span class="text-xl">ℹ️</span>
+                <span class="text-[10px] font-medium mt-1">Biz haqimizda</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- JavaScript Logika -->
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        let currentUser = tg.initDataUnsafe?.user;
+        let userId = currentUser ? currentUser.id : 6177821743; // Test uchun default ID
+
+        let jobs = JSON.parse(localStorage.getItem('jobby_jobs')) || [
+            { id: 1, title: "Frontend Dasturchi (React)", company: "UzSoft LLC", salary: "$800 - $1200", type: "To'liq stavka", contact: "@uzsoft_HR", desc: "React va Tailwind bilan ishlay oladigan tajribali mutaxassis izlaymiz.", status: "approved" },
+            { id: 2, title: "SMM Menejer", company: "Marketing Pro", salary: "4 mln - 6 mln so'm", type: "Masofaviy (Remote)", contact: "@marketing_boss", desc: "Instagram va Telegram uchun kontent reja tuzish va yuritish.", status: "approved" }
+        ];
+
+        let pendingJobs = JSON.parse(localStorage.getItem('jobby_pending')) || [];
+
+        if (userId === ADMIN_ID) {
+            setupAdmin();
+        }
+
+        function setupAdmin() {
+            document.getElementById('user-badge').classList.remove('hidden');
+            let navContainer = document.getElementById('nav-container');
+            let adminBtn = document.createElement('button');
+            adminBtn.className = "nav-btn flex flex-col items-center text-slate-400";
+            adminBtn.setAttribute('onclick', "switchTab('admin')");
+            adminBtn.setAttribute('data-target', 'admin-tab');
+            adminBtn.innerHTML = `<span class="text-xl">🛡️</span><span class="text-[10px] font-medium mt-1">Admin</span>`;
+            navContainer.appendChild(adminBtn);
+            renderAdminPanel();
+        }
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('text-indigo-600'));
+            document.querySelectorAll('.nav-btn').forEach(el => el.classList.add('text-slate-400'));
+
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.currentTarget.classList.remove('text-slate-400');
+            event.currentTarget.classList.add('text-indigo-600');
+
+            if(tabName === 'admin') renderAdminPanel();
+            if(tabName === 'jobs') renderJobs();
+        }
+
+        function renderJobs(filterText = '') {
+            const listEl = document.getElementById('jobs-list');
+            listEl.innerHTML = '';
+
+            const approvedJobs = jobs.filter(j => j.status === 'approved');
+            const filtered = approvedJobs.filter(j => 
+                j.title.toLowerCase().includes(filterText.toLowerCase()) || 
+                j.company.toLowerCase().includes(filterText.toLowerCase())
+            );
+
+            if (filtered.length === 0) {
+                listEl.innerHTML = `<div class="text-center py-10 text-slate-400 text-sm">Hozircha vakansiyalar topilmadi.</div>`;
+                return;
+            }
+
+            filtered.forEach(job => {
+                listEl.innerHTML += `
+                    <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 space-y-2">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h3 class="font-bold text-slate-800">${job.title}</h3>
+                                <p class="text-xs text-slate-500 font-medium">${job.company}</p>
+                            </div>
+                            <span class="bg-indigo-50 text-indigo-600 text-[10px] font-bold px-2 py-1 rounded-lg">${job.type}</span>
+                        </div>
+                        <p class="text-sm font-semibold text-emerald-600">💰 ${job.salary}</p>
+                        <p class="text-xs text-slate-600 leading-relaxed">${job.desc}</p>
+                        <div class="pt-2 flex justify-between items-center border-t border-slate-50">
+                            <span class="text-xs text-slate-400">Bog'lanish: <b class="text-indigo-600">${job.contact}</b></span>
+                            <a href="https://t.me/${job.contact.replace('@','')}" target="_blank" class="bg-indigo-600 text-white text-xs px-3 py-1.5 rounded-xl font-medium hover:bg-indigo-700 transition">
+                                Yozish
+                            </a>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function filterJobs() {
+            const val = document.getElementById('search-input').value;
+            renderJobs(val);
+        }
+
+        function submitJob(e) {
+            e.preventDefault();
+            const newJob = {
+                id: Date.now(),
+                title: document.getElementById('job-title').value,
+                company: document.getElementById('job-company').value,
+                salary: document.getElementById('job-salary').value,
+                type: document.getElementById('job-type').value,
+                contact: document.getElementById('job-contact').value,
+                desc: document.getElementById('job-desc').value,
+                status: 'pending'
+            };
+
+            pendingJobs.push(newJob);
+            localStorage.setItem('jobby_pending', JSON.stringify(pendingJobs));
+
+            alert("E'loningiz muvaffaqiyatli yuborildi! Admin tasdiqlagach, ilova va kanalga chiqariladi.");
+            document.getElementById('job-form').reset();
+            switchTab('jobs');
+        }
+
+        function renderAdminPanel() {
+            const listEl = document.getElementById('admin-pending-list');
+            document.getElementById('pending-count').innerText = `${pendingJobs.length} ta kutilmoqda`;
+            listEl.innerHTML = '';
+
+            if (pendingJobs.length === 0) {
+                listEl.innerHTML = `<div class="text-center py-10 text-slate-400 text-sm">Hozircha kutilayotgan e'lonlar yo'q.</div>`;
+                return;
+            }
+
+            pendingJobs.forEach((job, index) => {
+                listEl.innerHTML += `
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2">
+                        <h3 class="font-bold text-slate-800">${job.title}</h3>
+                        <p class="text-xs text-slate-500">${job.company} | ${job.salary} | ${job.type}</p>
+                        <p class="text-xs text-slate-600">${job.desc}</p>
+                        <p class="text-xs font-semibold text-indigo-600">Aloqa: ${job.contact}</p>
+                        <div class="flex gap-2 pt-2">
+                            <button onclick="approveJob(${index})" class="flex-1 bg-emerald-600 text-white text-xs py-2 rounded-lg font-medium hover:bg-emerald-700 transition">
+                                ✅ Tasdiqlash
+                            </button>
+                            <button onclick="rejectJob(${index})" class="flex-1 bg-rose-600 text-white text-xs py-2 rounded-lg font-medium hover:bg-rose-700 transition">
+                                ❌ Rad etish
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function approveJob(index) {
+            let job = pendingJobs.splice(index, 1)[0];
+            job.status = 'approved';
+            jobs.unshift(job);
+
+            localStorage.setItem('jobby_jobs', JSON.stringify(jobs));
+            localStorage.setItem('jobby_pending', JSON.stringify(pendingJobs));
+
+            sendToTelegramChannel(job);
+
+            renderAdminPanel();
+            alert("E'lon tasdiqlandi va kanalga yuborildi!");
+        }
+
+        function rejectJob(index) {
+            pendingJobs.splice(index, 1);
+            localStorage.setItem('jobby_pending', JSON.stringify(pendingJobs));
+            renderAdminPanel();
+            alert("E'lon rad etildi.");
+        }
+
+        async function sendToTelegramChannel(job) {
+            const text = `🔥 **Yangi Vakansiya!**\n\n` +
+                         `📌 **Lavozim:** ${job.title}\n` +
+                         `🏢 **Kompaniya:** ${job.company}\n` +
+                         `💰 **Maosh:** ${job.salary}\n` +
+                         `📋 **Ish turi:** ${job.type}\n\n` +
+                         `📝 **Tavsif:**\n${job.desc}\n\n` +
+                         `📞 **Aloqa:** ${job.contact}\n\n` +
+                         `👉 Bot orqali ish topish: @jobbyuz`;
+
+            try {
+                await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: CHANNEL_USERNAME,
+                        text: text,
+                        parse_mode: 'Markdown'
+                    })
+                });
+            } catch (err) {
+                console.error("Kanalga yuborishda xatolik:", err);
+            }
+        }
+
+        renderJobs();
+    </script>
+</body>
+</html>
